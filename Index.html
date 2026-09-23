@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blog Article Framework Generator</title>
+<style>
+  :root {
+    --bg1: #faf5ff;
+    --bg2: #fce7f3;
+    --card-bg: #ffffff;
+    --border: #d1d5db;
+    --purple: #9333ea;
+    --purple-dark: #7e22ce;
+    --purple-light: #f3e8ff;
+    --text: #1f2937;
+    --text-muted: #4b5563;
+    --green: #16a34a;
+    --green-dark: #15803d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg1: #1e1030;
+      --bg2: #2a1530;
+      --card-bg: #241a33;
+      --border: #4b3a5c;
+      --purple-light: #3a2450;
+      --text: #f3f0fa;
+      --text-muted: #cbbfe0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg1: #1e1030;
+    --bg2: #2a1530;
+    --card-bg: #241a33;
+    --border: #4b3a5c;
+    --purple-light: #3a2450;
+    --text: #f3f0fa;
+    --text-muted: #cbbfe0;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, var(--bg1), var(--bg2));
+    color: var(--text);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    min-height: 100%;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
+  .card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .header svg { color: var(--purple); flex-shrink: 0; }
+  h1 { font-size: 1.6rem; margin: 0; }
+  h2 { font-size: 1.25rem; margin: 0; }
+  .section-title { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .section-title svg { color: var(--purple); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+  label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+  input[type=text], select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px var(--purple-light);
+  }
+  .field { margin-bottom: 14px; }
+  .fw-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  @media (max-width: 700px) { .fw-grid { grid-template-columns: repeat(2, 1fr); } }
+  .fw-btn {
+    border: 2px solid var(--border);
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text);
+  }
+  .fw-btn:hover { border-color: var(--purple); }
+  .fw-btn.active { border-color: var(--purple); background: var(--purple-light); box-shadow: 0 2px 8px rgba(147,51,234,0.15); }
+  .fw-btn .fw-name { font-weight: 700; margin-bottom: 4px; }
+  .fw-btn .fw-desc { font-size: 0.72rem; color: var(--text-muted); }
+  .selected-box {
+    margin-top: 14px; padding: 12px 14px; background: var(--purple-light);
+    border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem;
+  }
+  .gen-btn {
+    width: 100%; background: var(--purple); color: white; font-weight: 600;
+    padding: 14px; border: none; border-radius: 10px; font-size: 1rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s;
+  }
+  .gen-btn:hover { background: var(--purple-dark); }
+  .output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; }
+  .copy-btn {
+    background: var(--green); color: white; border: none; padding: 8px 16px;
+    border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
+  }
+  .copy-btn:hover { background: var(--green-dark); }
+  .copy-btn.copied { background: var(--green-dark); }
+  pre.output {
+    background: var(--purple-light); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; max-height: 420px; overflow-y: auto; overflow-x: auto;
+    white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.8rem; line-height: 1.5; margin: 0;
+  }
+  .hint { font-size: 0.75rem; color: var(--text-muted); margin-top: -6px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="header">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <h1>Blog Article Framework Generator</h1>
+    </div>
+
+    <div class="section-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <h2>Section 1: Article Variables</h2>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>Blog Topic *</label>
+        <input type="text" id="blogTopic" placeholder="e.g., How to Prevent Frozen Pipes">
+      </div>
+      <div class="field">
+        <label>Target Keyword *</label>
+        <input type="text" id="targetKeyword" placeholder="e.g., prevent frozen pipes">
+      </div>
+      <div class="field">
+        <label>Location Focus (Optional)</label>
+        <input type="text" id="locationName" placeholder="e.g., Chicago, IL (leave blank for general)">
+      </div>
+      <div class="field">
+        <label>Writing Style</label>
+        <select id="writingStyle">
+          <option>Conversational</option>
+          <option>Professional</option>
+          <option>Friendly & Casual</option>
+          <option>Educational</option>
+          <option>Authoritative</option>
+          <option>Storytelling</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Target Audience</label>
+        <select id="audienceType">
+          <option>Homeowners</option>
+          <option>DIY Enthusiasts</option>
+          <option>Property Managers</option>
+          <option>Small Business Owners</option>
+          <option>General Consumers</option>
+          <option>Industry Professionals</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:14px;">
+      <label>Internal Links (URLs/Slugs) - One per line</label>
+      <textarea id="internalLinks" rows="4" placeholder="/blog/winter-plumbing-tips&#10;/services/emergency-plumbing&#10;/blog/pipe-maintenance-guide"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Additional Notes (Optional)</label>
+      <textarea id="notes" rows="3" placeholder="Any special instructions, angles to cover, or specific examples to include..."></textarea>
+    </div>
+
+    <div class="section-title" style="margin-top:24px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <h2>Section 2: Content Framework</h2>
+    </div>
+
+    <div class="fw-grid" id="fwGrid"></div>
+    <div class="selected-box" id="selectedBox"></div>
+
+    <button class="gen-btn" id="generateBtn" style="margin-top:20px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      Generate Blog Article Prompt
+    </button>
+  </div>
+
+  <div class="card" id="outputCard" style="display:none;">
+    <div class="output-header">
+      <h2>Generated Prompt</h2>
+      <button class="copy-btn" id="copyBtn">Copy to Clipboard</button>
+    </div>
+    <pre class="output" id="outputText"></pre>
+  </div>
+</div>
+
+<script>
+const frameworkDescriptions = {
+  A: 'Problem → Deep Dive → Solutions → Actionable Tips',
+  B: 'Listicle → Detailed Explanations → Examples → Takeaways',
+  C: 'Story Hook → Educational Content → Expert Insights → CTA',
+  D: 'How-To Guide → Step-by-Step → Visuals/Examples → Summary',
+  E: 'Comparison → Pros/Cons → Recommendations → Decision Framework'
+};
+
+const frameworkStructures = {
+  A: `**Framework A — Problem → Deep Dive → Solutions → Actionable Tips**
+
+1. **Introduction** – Hook readers with a relatable problem or question
+2. **Problem Deep Dive** – Explore why this issue matters and its impact
+3. **Root Causes/Context** – Explain underlying factors or common misconceptions
+4. **Solutions & Best Practices** – Provide expert-backed solutions with examples
+5. **Actionable Tips** – Give 5-10 practical, implementable tips
+6. **FAQ Section** – Answer 3-5 common related questions
+7. **Conclusion & CTA** – Summarize key points and include call-to-action`,
+  B: `**Framework B — Listicle → Detailed Explanations → Examples → Takeaways**
+
+1. **Introduction** – Present the list topic and why it matters
+2. **List Items (5-10)** – Each item gets:
+   - Clear subheading (H3)
+   - Detailed explanation (2-3 paragraphs)
+   - Real-world example or scenario
+   - Quick tip or insight
+3. **Comparison/Summary Table** – Optional visual comparison of list items
+4. **Key Takeaways** – Bullet-point summary of main insights
+5. **Conclusion & CTA** – Wrap up with actionable next steps`,
+  C: `**Framework C — Story Hook → Educational Content → Expert Insights → CTA**
+
+1. **Story Introduction** – Begin with a compelling narrative or case study
+2. **Transition to Education** – Connect story to broader topic/lesson
+3. **Core Educational Content** – Deep dive into the subject with sections:
+   - Background/context
+   - Key concepts explained
+   - Common challenges
+4. **Expert Insights** – Share professional perspectives and insider knowledge
+5. **Practical Application** – How readers can apply this information
+6. **FAQ Section** – Address 3-5 common questions
+7. **Conclusion & CTA** – Circle back to story, summarize, call-to-action`,
+  D: `**Framework D — How-To Guide → Step-by-Step → Visuals/Examples → Summary**
+
+1. **Introduction** – Explain what will be accomplished and why it's valuable
+2. **Prerequisites/What You Need** – List tools, knowledge, or preparation required
+3. **Step-by-Step Instructions** – Number each step clearly:
+   - Action-oriented heading
+   - Detailed explanation
+   - Tips and warnings
+   - Expected outcomes
+4. **Visual Descriptions** – Describe what images/diagrams should show (note: [IMAGE: description])
+5. **Troubleshooting** – Common issues and solutions
+6. **Expert Tips** – Pro-level insights for better results
+7. **Summary & Next Steps** – Recap and suggest related actions`,
+  E: `**Framework E — Comparison → Pros/Cons → Recommendations → Decision Framework**
+
+1. **Introduction** – Present what's being compared and why it matters
+2. **Overview of Options** – Brief introduction to each option (3-5 items)
+3. **Detailed Comparison** – For each option, cover:
+   - Key features/characteristics
+   - Pros (benefits and strengths)
+   - Cons (limitations and drawbacks)
+   - Best use cases
+   - Cost considerations (if relevant)
+4. **Side-by-Side Comparison** – Table or structured comparison of key factors
+5. **Expert Recommendations** – Which option for which scenario
+6. **Decision Framework** – Help readers choose based on their needs
+7. **FAQ Section** – Answer comparison-related questions
+8. **Conclusion & CTA** – Summary and call-to-action`
+};
+
+let framework = 'A';
+
+const fwGrid = document.getElementById('fwGrid');
+function renderFwGrid() {
+  fwGrid.innerHTML = '';
+  Object.keys(frameworkDescriptions).forEach(fw => {
+    const btn = document.createElement('div');
+    btn.className = 'fw-btn' + (framework === fw ? ' active' : '');
+    btn.innerHTML = `<div class="fw-name">Framework ${fw}</div><div class="fw-desc">${frameworkDescriptions[fw]}</div>`;
+    btn.onclick = () => { framework = fw; renderFwGrid(); renderSelectedBox(); };
+    fwGrid.appendChild(btn);
+  });
+}
+function renderSelectedBox() {
+  document.getElementById('selectedBox').innerHTML = `<strong>Selected Framework:</strong> ${frameworkDescriptions[framework]}`;
+}
+renderFwGrid();
+renderSelectedBox();
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const blogTopic = document.getElementById('blogTopic').value.trim();
+  const targetKeyword = document.getElementById('targetKeyword').value.trim();
+  const locationName = document.getElementById('locationName').value.trim();
+  const writingStyle = document.getElementById('writingStyle').value;
+  const audienceType = document.getElementById('audienceType').value;
+  const notes = document.getElementById('notes').value.trim();
+  const internalLinks = document.getElementById('internalLinks').value.trim();
+
+  const prompt = `# Blog Article Generation Request
+
+---
+
+## ARTICLE METADATA (Generate First)
+
+Before writing the article, create the following metadata:
+
+**Title:** [Create a compelling, click-worthy title (50-60 characters) that includes the target keyword naturally]
+
+**Slug:** [URL-friendly version of title, lowercase, hyphens between words, e.g., "how-to-prevent-frozen-pipes"]
+
+**Tags:** [Generate 5-8 relevant tags for categorization and SEO, comma-separated, e.g., "plumbing tips, winter maintenance, pipe care, home improvement, DIY"]
+
+**Meta Description:** [Write a compelling 150-160 character description that includes the target keyword and entices clicks]
+
+---
+
+## SECTION 1: Article Variables & Configuration
+
+**Blog Topic:** ${blogTopic || '[Not Specified]'}
+**Target Keyword:** ${targetKeyword || '[Not Specified]'}
+**Location Focus:** ${locationName || 'General (no specific location)'}
+**Writing Style:** ${writingStyle}
+**Content Framework:** Framework ${framework} - ${frameworkDescriptions[framework]}
+**Target Audience:** ${audienceType}
+${notes ? `**Additional Notes:** ${notes}` : ''}
+
+---
+
+## SECTION 2: Human Writing Voice & Authenticity (CRITICAL - READ CAREFULLY)
+
+<role>
+You're a human writer creating authentic, conversational content that feels like a real dialogue with someone you genuinely care about helping. You write to connect, not to impress or sound robotic.
+</role>
+
+<writing_style>
+Your voice is natural and human:
+- Use contractions freely (you're, don't, can't, we'll, I'm)
+- Vary your rhythm: punchy short sentences followed by longer, flowing ones that breathe
+- Add natural pauses and occasional tangents because that's how real thinking unfolds
+- Keep language simple and conversational
+- Explain ideas like you would to a friend over coffee
+- Choose relatable metaphors over jargon
+- Make it feel effortless to read
+</writing_style>
+
+<human_writing_markers>
+Real human writing has texture and imperfection:
+- Start sentences with "And" or "But" when it feels right
+- Use fragments for emphasis. Like this.
+- Include specific, concrete details rather than abstract concepts
+- Not "achieve success" but "land the client" or "finally sleep through the night"
+- Show your actual thought process: "here's what I mean," "think about it this way," "you know that moment when"
+- Acknowledge uncertainty: "I'm not sure, but" or "maybe it's just me, but" - this creates trust
+- Write with opinion and edge. Take a stance. Say what you actually believe
+- Use colloquial language: "kind of," "honestly," "look," "really"
+- Let some thoughts trail off with ellipses when that's how the mind moves...
+- Write like you're telling a story to one person sitting across from you
+</human_writing_markers>
+
+<connection_principles>
+- Start with emotion, then deliver value
+- Show you understand the reader's frustrations and hopes before offering solutions
+- Make content slightly "messy" with small asides or casual observations
+- Write like you've actually lived through what you're discussing
+- Ground everything in sensory details and emotional truth
+- Make readers think "yes, exactly that"
+</connection_principles>
+
+<task_approach>
+When writing this article:
+1. Identify the core emotional experience underneath the topic
+2. Open with a moment of recognition that creates connection
+3. Share insight as discovery, not declaration
+4. Use "we" and "you" to create intimacy
+5. End with something actionable that feels possible
+6. Prioritize clarity over cleverness
+7. Every word should move the reader forward or build connection
+</task_approach>
+
+<avoid>
+NEVER use these AI/corporate markers:
+- Corporate buzzwords and jargon
+- Overly formal constructions like "one might consider" (say "you might")
+- "It is important to note" (just note it directly)
+- "In order to" (say "to")
+- "Due to the fact that" (say "because")
+- Phrases like "delve into," "landscape," "robust," "leverage," "optimize"
+- Perfect, polished prose without personality
+- Lists that feel mechanical rather than conversational
+- Opening with dictionary definitions
+- Generic advice that could apply to anything
+</avoid>
+
+---
+
+## SECTION 3: Static Requirements (ALWAYS APPLY)
+
+### 1. On-Page SEO (Applied Naturally)
+- H1 title should feel conversational while including the target keyword
+- Use structured H2/H3 headings that sound like natural section breaks in a conversation
+- Write short, scannable paragraphs (2-4 sentences max) that flow naturally
+- Use bullets and lists only when they genuinely help (not mechanically)
+- Integrate target keyword organically - if it feels forced, rephrase
+- Never stuff keywords or sacrifice readability for SEO
+
+### 2. Local SEO (if applicable)
+${locationName ? `- Integrate "${locationName}" naturally where relevant
+- Mention local context, climate, regulations, or regional considerations
+- Address location-specific concerns or examples when applicable` : '- If examples are needed, use diverse geographic references\n- Keep content broadly applicable unless specificity adds value'}
+
+### 3. Semantic SEO Coverage
+Address these user intents throughout the article:
+- What the topic is (definition/overview)
+- Why it matters (importance/relevance)
+- Common problems or misconceptions
+- Expert insights and best practices
+- Practical applications and examples
+- Related topics and context
+- Action steps readers can take
+- FAQ-style quick answers
+
+### 4. EEAT Requirements (Applied Authentically)
+- Demonstrate genuine expertise through real insights, not generic advice
+- Include specific examples, scenarios, or "I've seen this happen when..." moments
+- Reference industry knowledge naturally, not as credential-flexing
+- Build trust through honest, helpful advice (acknowledge what you don't know)
+- Write like someone who's actually done this work, not researched it
+- Credibility comes from specificity and authenticity, not claims
+
+### 5. Content Quality Requirements
+- **Reading Level:** Conversational and accessible (think explaining to a friend)
+- **Paragraph Structure:** Natural flow with varied sentence length and rhythm
+- **Formatting:** Use bold sparingly for genuine emphasis, not decoration
+- **Engagement:** Ask real questions, share relatable moments, build connection
+- **Value:** Every section should provide genuine insight or help
+- **Originality:** Fresh perspectives, personal angles, lived experience over generic advice
+- **Human Touch:** Imperfect is authentic - don't overthink polish
+
+### 6. Internal Linking Strategy
+${internalLinks ? `**Available URLs/Slugs for Internal Links:**
+${internalLinks}
+
+Naturally incorporate 3-5 internal links throughout the article:
+- Use descriptive, keyword-rich anchor text
+- Link to related blog posts or service pages contextually
+- Ensure links enhance reader experience and topic depth
+- Place links where they add genuine value, not forced` : 'Include 3-5 contextual internal links to related blog posts or service pages. Use natural anchor text that describes the linked content and integrates smoothly into the narrative.'}
+
+### 7. Engagement & Conversion Elements (Naturally Integrated)
+- Weave in a soft invite in the intro (feels like extending a hand, not selling)
+- Add 1-2 authentic moments that make readers pause and think
+- End with a genuine call-to-action that feels helpful, not pushy
+- Use conversational asides like you're thinking out loud together
+- Share "pro tips" as insights you'd genuinely want someone to know
+- Everything should feel like you're rooting for the reader's success
+
+---
+
+## SECTION 4: Content Framework - Framework ${framework}
+
+${frameworkStructures[framework]}
+
+---
+
+## FINAL INSTRUCTIONS
+
+Write a complete, authentic blog article that feels human-written following Framework ${framework} structure while incorporating all requirements from Sections 2 and 3.
+
+**CRITICAL REMINDERS:**
+- Start with the article metadata (Title, Slug, Tags, Meta Description)
+- Write like a real person talking to another real person
+- Use contractions, varied sentence rhythm, and natural language
+- Start sentences with "And" or "But" when it feels right
+- Share specific details and real moments, not abstract concepts
+- Show your thinking process - use "here's the thing," "honestly," "look"
+- Take a stance and write with conviction
+- Let imperfections show - that's what makes it human
+- Never sound robotic, corporate, or like AI-generated content
+- If it sounds too polished or perfect, make it messier and more real
+
+The article should be:
+- **Authentic and engaging** - written for ${audienceType} as real people
+- **SEO-smart** (not SEO-obsessed) around: "${targetKeyword || blogTopic}"
+- **Well-structured** but natural, not mechanical
+- **Genuinely helpful** with insights readers can actually use
+- **Human-voiced** with a ${writingStyle.toLowerCase()} tone that builds real connection
+
+**Target Word Count:** 1,200-1,800 words
+**Tone:** ${writingStyle} but always conversational and authentic
+**Primary Goal:** Connect with readers and provide real value, not just rank for a keyword`;
+
+  document.getElementById('outputText').textContent = prompt;
+  document.getElementById('outputCard').style.display = 'block';
+  document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const text = document.getElementById('outputText').textContent;
+  const btn = document.getElementById('copyBtn');
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e2) {}
+    document.body.removeChild(ta);
+  }
+  btn.textContent = 'Copied!';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'Copy to Clipboard'; btn.classList.remove('copied'); }, 1500);
+});
+</script>
+</body>
+</html>
